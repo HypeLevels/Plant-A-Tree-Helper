@@ -15,7 +15,7 @@ import {
   Th,
   Td,
   TableContainer,
-  TableCaption
+  TableCaption,
 } from '@chakra-ui/react';
 import { ColorModeSwitcher } from './ColorModeSwitcher';
 import { useWeb3React } from "@web3-react/core"
@@ -27,10 +27,11 @@ const injected = new InjectedConnector()
 
 function App() {
   const [getMyTrees, setGetMyTrees] = useState(0)
-  const [totalAvax, setTotalAvax] = useState(0)
+  const [totalAvax, setTotalAvax] = useState("0 AVAX")
+  const [totalReferrals, setTotalReferrals] = useState(0)
   const [dayList] = useState([{ day: 1, value: 0 }, { day: 2, value: 0 }, { day: 3, value: 0 }, { day: 4, value: 0 }, { day: 5, value: 0 }, { day: 6, value: 0 }, { day: 7, value: 0 }])
   const [error, setError] = useState("")
-  const [treeIncrease, setTreeIncrease] = useState(0)
+  const [treeIncrease, setTreeIncrease] = useState("0%")
   const { activate, active, library: provider, chainId } = useWeb3React()
 
   useEffect(() => {
@@ -43,7 +44,9 @@ function App() {
           const tx1 = await contract.getMyMiners()
           setGetMyTrees(tx1.toNumber())
           const tx2 = await contract.totalPlantedBalance()
-          setTotalAvax(ethers.utils.formatEther(tx2))
+          setTotalAvax(ethers.utils.formatEther(tx2) + " AVAX")
+          const tx3 = await contract.getMyReferralsUsedCount()
+          setTotalReferrals(tx3.toNumber())
           for (let i = 0; i < dayList.length; i++) {
             if (i === 0) {
               dayList[i].value = Math.round(tx1.toNumber() + (tx1.toNumber() * 0.08))
@@ -51,7 +54,7 @@ function App() {
               dayList[i].value = Math.round((dayList[i - 1].value + (dayList[i - 1].value * 0.08)))
             }
           }
-          setTreeIncrease(Math.round(dayList[6].value / tx1.toNumber() * 100))
+          setTreeIncrease(Math.round(dayList[6].value / tx1.toNumber() * 100) + "%")
         } catch (e) {
           console.log(e)
           setError("Something Wrong Happened")
@@ -82,7 +85,7 @@ function App() {
                     <Thead>
                       <Tr>
                         {dayList.map((element) => {
-                          return <Th key={element.day}>Day {element.day}</Th>
+                          return <Th textAlign="center" key={element.day}>Day {element.day}</Th>
                         })
                         }
                       </Tr>
@@ -101,19 +104,21 @@ function App() {
                   <Table variant='simple'>
                     <Thead>
                       <Tr>
-                        <Th>Total Avax Invested</Th>
+                        <Th>Total Invested</Th>
                         <Th>Total Trees</Th>
-                        <Th>Total Tree Increase (in %)</Th>
+                        <Th>Referrals</Th>
+                        <Th>Weekly Tree Increase</Th>
                       </Tr>
                     </Thead>
                     <Tbody>
                       <Tr>
-                        <Td>{totalAvax}</Td>
-                        <Td>{getMyTrees}</Td>
-                        <Td>{treeIncrease}</Td>
+                        <Td textAlign="center">{totalAvax}</Td>
+                        <Td textAlign="center">{getMyTrees}</Td>
+                        <Td textAlign="center">{totalReferrals}</Td>
+                        <Td textAlign="center">{treeIncrease}</Td>
                       </Tr>
                     </Tbody>
-                    <TableCaption>Estimated tree values based on 8% daily return.</TableCaption>
+                    <TableCaption>Estimated amount of trees based on 8% daily return.</TableCaption>
                   </Table>
                 </TableContainer>
                 <Text>{error}</Text>
