@@ -30,9 +30,9 @@ function App() {
   const [replantDate, setReplantDate] = useState("")
   const [totalAvax, setTotalAvax] = useState("0 AVAX")
   const [totalReferrals, setTotalReferrals] = useState(0)
-  const [dayList] = useState([{ day: 1, value: 0 }, { day: 2, value: 0 }, { day: 3, value: 0 }, { day: 4, value: 0 }, { day: 5, value: 0 }, { day: 6, value: 0 }, { day: 7, value: 0 }])
+  const [dayList] = useState([{ day: 1, value: 0, diff: 0 }, { day: 2, value: 0, diff: 0 }, { day: 3, value: 0, diff: 0 }, { day: 4, value: 0, diff: 0 }, { day: 5, value: 0, diff: 0 }, { day: 6, value: 0, diff: 0 }, { day: 7, value: 0, diff: 0 }])
   const [error, setError] = useState("")
-  const [treeIncrease, setTreeIncrease] = useState("0%")
+  const [currentTax, setCurrentTax] = useState("0%")
   const { activate, active, library: provider, chainId } = useWeb3React()
 
   useEffect(() => {
@@ -51,14 +51,21 @@ function App() {
           const tx4 = await contract.diffTimeSinceLastRePlantTree()
           const diff = 86400000 - (tx4.toNumber() * 1000)
           setReplantDate(new Date(Date.now() + diff).toLocaleString("en-GB"))
+          const tx5 = await contract.getCurrentDayExtraTax(1)
+          setCurrentTax(tx5.toNumber() + "%")
           for (let i = 0; i < dayList.length; i++) {
-            i === 0 ? dayList[i].value = Math.round(tx1.toNumber() + (tx1.toNumber() * 0.08)) : dayList[i].value = Math.round((dayList[i - 1].value + (dayList[i - 1].value * 0.08)))
+            if (i === 0) {
+              dayList[i].value = Math.round(tx1.toNumber() + (tx1.toNumber() * 0.08))
+              dayList[i].diff = dayList[i].value - tx1.toNumber()
+            } else {
+              dayList[i].value = Math.round((dayList[i - 1].value + (dayList[i - 1].value * 0.08)))
+              dayList[i].diff = dayList[i].value - dayList[i-1].value 
+            }
           }
-          setTreeIncrease(Math.round(dayList[6].value / tx1.toNumber() * 100) + "%")
         } catch (e) {
           console.log(e)
           setError("Something Wrong Happened")
-          setTimeout(() => {setError("")}, 5000)
+          setTimeout(() => { setError("") }, 5000)
         }
       }
     }
@@ -93,6 +100,11 @@ function App() {
                           return <Td key={element.day}>{element.value}</Td>
                         })}
                       </Tr>
+                      <Tr>
+                        {dayList.map((element) => {
+                          return <Td key={element.day}>+{element.diff}</Td>
+                        })}
+                      </Tr>
                     </Tbody>
                   </Table>
                 </TableContainer>
@@ -103,7 +115,7 @@ function App() {
                         <Th>Total Invested</Th>
                         <Th>Total Trees</Th>
                         <Th>Referrals</Th>
-                        <Th>Weekly Tree Increase</Th>
+                        <Th>Current Tax</Th>
                         <Th textAlign="center">Next Replant</Th>
                       </Tr>
                     </Thead>
@@ -112,7 +124,7 @@ function App() {
                         <Td textAlign="center">{totalAvax}</Td>
                         <Td textAlign="center">{getMyTrees}</Td>
                         <Td textAlign="center">{totalReferrals}</Td>
-                        <Td textAlign="center">{treeIncrease}</Td>
+                        <Td textAlign="center">{currentTax}</Td>
                         <Td>{replantDate}</Td>
                       </Tr>
                     </Tbody>
