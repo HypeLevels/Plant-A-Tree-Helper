@@ -27,6 +27,7 @@ const injected = new InjectedConnector()
 
 function App() {
   const [getMyTrees, setGetMyTrees] = useState(0)
+  const [replantDate, setReplantDate] = useState("")
   const [totalAvax, setTotalAvax] = useState("0 AVAX")
   const [totalReferrals, setTotalReferrals] = useState(0)
   const [dayList] = useState([{ day: 1, value: 0 }, { day: 2, value: 0 }, { day: 3, value: 0 }, { day: 4, value: 0 }, { day: 5, value: 0 }, { day: 6, value: 0 }, { day: 7, value: 0 }])
@@ -47,20 +48,17 @@ function App() {
           setTotalAvax(ethers.utils.formatEther(tx2) + " AVAX")
           const tx3 = await contract.getMyReferralsUsedCount()
           setTotalReferrals(tx3.toNumber())
+          const tx4 = await contract.diffTimeSinceLastRePlantTree()
+          const diff = 86400000 - (tx4.toNumber() * 1000)
+          setReplantDate(new Date(Date.now() + diff).toLocaleString("en-GB"))
           for (let i = 0; i < dayList.length; i++) {
-            if (i === 0) {
-              dayList[i].value = Math.round(tx1.toNumber() + (tx1.toNumber() * 0.08))
-            } else {
-              dayList[i].value = Math.round((dayList[i - 1].value + (dayList[i - 1].value * 0.08)))
-            }
+            i === 0 ? dayList[i].value = Math.round(tx1.toNumber() + (tx1.toNumber() * 0.08)) : dayList[i].value = Math.round((dayList[i - 1].value + (dayList[i - 1].value * 0.08)))
           }
           setTreeIncrease(Math.round(dayList[6].value / tx1.toNumber() * 100) + "%")
         } catch (e) {
           console.log(e)
           setError("Something Wrong Happened")
-          setTimeout(() => {
-            setError("")
-          }, 5000)
+          setTimeout(() => {setError("")}, 5000)
         }
       }
     }
@@ -86,16 +84,14 @@ function App() {
                       <Tr>
                         {dayList.map((element) => {
                           return <Th textAlign="center" key={element.day}>Day {element.day}</Th>
-                        })
-                        }
+                        })}
                       </Tr>
                     </Thead>
                     <Tbody>
                       <Tr>
                         {dayList.map((element) => {
                           return <Td key={element.day}>{element.value}</Td>
-                        })
-                        }
+                        })}
                       </Tr>
                     </Tbody>
                   </Table>
@@ -108,6 +104,7 @@ function App() {
                         <Th>Total Trees</Th>
                         <Th>Referrals</Th>
                         <Th>Weekly Tree Increase</Th>
+                        <Th textAlign="center">Next Replant</Th>
                       </Tr>
                     </Thead>
                     <Tbody>
@@ -116,14 +113,15 @@ function App() {
                         <Td textAlign="center">{getMyTrees}</Td>
                         <Td textAlign="center">{totalReferrals}</Td>
                         <Td textAlign="center">{treeIncrease}</Td>
+                        <Td>{replantDate}</Td>
                       </Tr>
                     </Tbody>
-                    <TableCaption>Estimated amount of trees based on 8% daily return.</TableCaption>
+                    <TableCaption>Estimated amount of trees based on 8% daily return.<br />Next Replant date might have some seconds of inacuracy due to how the blockchain updates.</TableCaption>
                   </Table>
                 </TableContainer>
                 <Text>{error}</Text>
               </>
-              : <><Text>Please connect your MetaMask wallet!</Text><Button onClick={() => activate(injected, console.log(error))}>Connect</Button></>}
+              : window.ethereum ? <><Text>Please connect your MetaMask wallet.</Text><Button onClick={() => activate(injected, console.log(error))}>Connect</Button></> : <><Text>Please install MetaMask.</Text><Button onClick={() => window.open("https://metamask.io/")}>MetaMask Website</Button></>}
           </VStack>
         </Grid>
       </Box>
