@@ -81,7 +81,7 @@ function App() {
           <ColorModeSwitcher justifySelf="flex-end" />
           <VStack spacing={8}>
             <Heading>
-              Plant A Tree - Profit Calculator
+              Plant A Tree Helper
             </Heading>
             {active ? chainId !== 43114 ? <Text>Please Change your network to Avalanche Network.</Text> :
               <>
